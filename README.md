@@ -29,8 +29,49 @@ _**FECO** is a framework for **dense foot contact estimation** that addresses th
 
 ## Code
 
+## Installation
+* We recommend you to use an [Anaconda](https://www.anaconda.com/) virtual environment. Install PyTorch >=1.13.1 and Python >= 3.8.0. Our latest FECO model is tested on Python 3.8.20, PyTorch 1.1e.1, CUDA 11.6.
+* Setup the environment.
+``` 
+# Initialize conda environment
+conda create -n feco python=3.8 -y
+conda activate feco
 
-### We are in the process of organizing the codebase, with the demo and inference code scheduled for release by the end of December and the training code in January.
+# Install PyTorch
+pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
+
+# Install all remaining packages
+pip install -r requirements.txt
+```
+
+## Data
+You need to follow our directory structure of the `data`.
+* For quick demo: See [`docs/data_demo.md`](docs/data_demo.md).
+
+Then, download the official checkpoints and place them in the `release_checkpoint` from [HuggingFace](https://huggingface.co/datasets/dqj5182/feco-checkpoints/tree/main) by running:
+```
+bash scripts/download_feco_checkpoints.sh
+```
+
+## Quick demo
+To run FECO on demo images using the [YOLO](https://docs.ultralytics.com/tasks/pose) human detector, please run:
+```
+python demo.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
+```
+
+For example,
+```
+# ViT-H (Default, HaMeR initialized) backbone
+python demo.py --backbone vit-h-14 --checkpoint release_checkpoint/feco_final_vit_h_checkpoint.ckpt --input_path asset/example_images
+
+# ViT-B (ImageNet initialized) backbone
+python demo.py --backbone vit-b-16 --checkpoint release_checkpoint/feco_final_vit_b_checkpoint.ckpt --input_path asset/example_images
+```
+
+
+## Technical Q&A
+* `ImportError: cannot import name 'bool' from 'numpy'`: Please just comment out the line `from numpy import bool, int, float, complex, object, unicode, str, nan, inf`.
+* `np.int was a deprecated alias for the builtin int. To avoid this error in existing code, use int by itself. Doing this will not modify any behavior and is safe. When replacing np.int, you may wish to use e.g. np.int64 or np.int32 to specify the precision. If you wish to review your current use, check the release note link for additional information`: Please refer to [here](https://github.com/scikit-optimize/scikit-optimize/issues/1171).
 
 
 ## Acknowledgement
