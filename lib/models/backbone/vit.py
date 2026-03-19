@@ -10,7 +10,7 @@ class ViTBackbone(nn.Module):
         pretrained=True,
         return_cls=False,
         style_stage=6,
-        out_indices=(2, 5, 8, 11),  # typical DPT stages for 12-layer ViT
+        out_indices=(2, 5, 8, 11),
     ):
         super().__init__()
         self.return_cls = return_cls
@@ -35,7 +35,7 @@ class ViTBackbone(nn.Module):
         for i, blk in enumerate(self.vit.blocks):
             x = blk(x)
             if i in self.out_indices:
-                patch_tokens = x[:, 1:]  # remove cls
+                patch_tokens = x[:, 1:]
                 H = W = int(patch_tokens.shape[1] ** 0.5)
                 feat = patch_tokens.view(B, H, W, self.embed_dim).permute(0, 3, 1, 2)
                 intermediate_outputs.append(feat)

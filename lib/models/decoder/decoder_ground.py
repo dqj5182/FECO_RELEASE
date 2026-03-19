@@ -13,8 +13,8 @@ class GroundNormalHead(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x):  # x: (B, C, H, W)
-        x = self.pool(x).view(x.size(0), -1)  # (B, C)
-        x = self.head(x)                      # (B, 3), range [-1, 1]
-        x = F.normalize(x, dim=-1)            # Ensure unit norm
+    def forward(self, x):
+        x = self.pool(x).view(x.size(0), -1)
+        x = self.head(x)
+        x = F.normalize(x, dim=-1)
         return x

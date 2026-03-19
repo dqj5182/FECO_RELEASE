@@ -1,14 +1,9 @@
-import torch
 import torch.nn as nn
-from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
-from torchvision.models._utils import IntermediateLayerGetter
 from torchvision.models.segmentation.fcn import FCNHead
-
-
-# -------------------------
-# Common spec and helpers
-# -------------------------
 from torchvision.models.resnet import BasicBlock, Bottleneck
+from torchvision.models._utils import IntermediateLayerGetter
+from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
+
 
 _RESNET_FACTORIES = {
     18:  resnet18,
@@ -18,7 +13,6 @@ _RESNET_FACTORIES = {
     152: resnet152,
 }
 
-# your requested spec (note: first channel 64 is the stem, stages are channels[1:])
 resnet_spec = {
     18:  (BasicBlock,  [2, 2, 2, 2],  [64,  64, 128, 256,  512], 'resnet18'),
     34:  (BasicBlock,  [3, 4, 6, 3],  [64,  64, 128, 256,  512], 'resnet34'),
@@ -27,11 +21,13 @@ resnet_spec = {
     152: (Bottleneck,  [3, 8, 36, 3], [64, 256, 512, 1024, 2048], 'resnet152'),
 }
 
+
 def _rswd_for_os(output_stride: int):
     if output_stride == 32: return (False, False, False)
     if output_stride == 16: return (False, True,  False)
     if output_stride == 8:  return (False, True,  True)
     raise ValueError("output_stride must be 8, 16, or 32")
+
 
 def _effective_rswd(resnet_type: int, output_stride: int):
     # BasicBlock nets do not support dilation
@@ -42,10 +38,6 @@ def _effective_rswd(resnet_type: int, output_stride: int):
     return _rswd_for_os(output_stride)
 
 
-# -------------------------
-# Encoder: FCN-style ResNet (18,34,50,101,152)
-# returns dict with intermediate_feats, final_feat, style_stage_feat
-# -------------------------
 class FCNResNetEncoder(nn.Module):
     def __init__(self, resnet_type=50, pretrained=True, style_stage=3, output_stride=8):
         super().__init__()
@@ -54,8 +46,8 @@ class FCNResNetEncoder(nn.Module):
         block, layers, channels_all, name = resnet_spec[resnet_type]
         self.name = name
         self.resnet_type = resnet_type
-        self.channels_all = channels_all              # includes stem 64
-        self.channels = tuple(channels_all[1:])       # stage1..4 only, e.g. (256,512,1024,2048) for 50
+        self.channels_all = channels_all
+        self.channels = tuple(channels_all[1:])
         self.style_stage = int(style_stage)
 
         rswd = _effective_rswd(resnet_type, output_stride)
@@ -98,11 +90,6 @@ class FCNResNetEncoder(nn.Module):
         print(f"Initialized {self.name} from torchvision pretrained weights")
 
 
-# -------------------------
-# Decoder: main FCN head only
-# picks in_channels from resnet_spec so 18/34 use 512 and 50/101/152 use 2048
-# accepts dict, list/tuple, or tensor
-# -------------------------
 class FCNResNetDecoder(nn.Module):
     def __init__(self, resnet_type=50, num_classes=1):
         super().__init__()

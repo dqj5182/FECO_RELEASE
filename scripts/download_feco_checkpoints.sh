@@ -5,7 +5,7 @@ TARGET_DIR="release_checkpoint"
 mkdir -p "$TARGET_DIR"
 
 # Base URL of the Hugging Face dataset repo (using 'resolve/main')
-BASE_URL="https://huggingface.co/datasets/dqj5182/feco-checkpoints/resolve/main/ArXiv2025"
+BASE_URL="https://huggingface.co/datasets/dqj5182/feco-checkpoints/resolve/main/CVPR2026"
 
 # List of files to download (add more as needed)
 FILES=(

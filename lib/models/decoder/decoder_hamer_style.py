@@ -160,19 +160,15 @@ class AdaptiveLayerNorm1D(torch.nn.Module):
             raise ValueError(f"norm_cond_dim must be positive, but got {norm_cond_dim}")
         self.norm = torch.nn.LayerNorm(
             data_dim
-        )  # TODO: Check if elementwise_affine=True is correct
+        )
         self.linear = torch.nn.Linear(norm_cond_dim, 2 * data_dim)
         torch.nn.init.zeros_(self.linear.weight)
         torch.nn.init.zeros_(self.linear.bias)
 
     def forward(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
-        # x: (batch, ..., data_dim)
-        # t: (batch, norm_cond_dim)
-        # return: (batch, data_dim)
         x = self.norm(x)
         alpha, beta = self.linear(t).chunk(2, dim=-1)
 
-        # Add singleton dimensions to alpha and beta
         if x.dim() > 2:
             alpha = alpha.view(alpha.shape[0], *([1] * (x.dim() - 2)), alpha.shape[1])
             beta = beta.view(beta.shape[0], *([1] * (x.dim() - 2)), beta.shape[1])
@@ -263,10 +259,8 @@ class DropTokenDropout(nn.Module):
         self.p = p
 
     def forward(self, x: torch.Tensor):
-        # x: (batch_size, seq_len, dim)
         if self.training and self.p > 0:
             zero_mask = torch.full_like(x[0, :, 0], self.p).bernoulli().bool()
-            # TODO: permutation idx for each batch using torch.argsort
             if zero_mask.any():
                 x = x[:, ~zero_mask, :]
         return x
@@ -352,14 +346,6 @@ class TransformerDecoder(nn.Module):
 
 
 def rot6d_to_rotmat(x: torch.Tensor) -> torch.Tensor:
-    """
-    Convert 6D rotation representation to 3x3 rotation matrix.
-    Based on Zhou et al., "On the Continuity of Rotation Representations in Neural Networks", CVPR 2019
-    Args:
-        x (torch.Tensor): (B,6) Batch of 6-D rotation representations.
-    Returns:
-        torch.Tensor: Batch of corresponding rotation matrices with shape (B,3,3).
-    """
     x = x.reshape(-1,2,3).permute(0, 2, 1).contiguous()
     a1 = x[:, :, 0]
     a2 = x[:, :, 1]
@@ -370,14 +356,6 @@ def rot6d_to_rotmat(x: torch.Tensor) -> torch.Tensor:
 
 
 def aa_to_rotmat(theta: torch.Tensor):
-    """
-    Convert axis-angle representation to rotation matrix.
-    Works by first converting it to a quaternion.
-    Args:
-        theta (torch.Tensor): Tensor of shape (B, 3) containing axis-angle representations.
-    Returns:
-        torch.Tensor: Corresponding rotation matrices with shape (B, 3, 3).
-    """
     norm = torch.norm(theta + 1e-8, p = 2, dim = 1)
     angle = torch.unsqueeze(norm, -1)
     normalized = torch.div(theta, angle)
@@ -399,7 +377,7 @@ class ContactTransformerDecoderHead(nn.Module):
             token_dim=1,
             dim=1024,
         )
-        if cfg.MODEL.backbone_type in ['resnet-50', 'resnet-101', 'resnet-152']:
+        if cfg.MODEL.backbone_type in ['resnet-50', 'resnet-101', 'resnet-152', 'hrnet-w32', 'hrnet-w48']:
             context_dim = 2048
         elif cfg.MODEL.backbone_type in ['vit-h-14']:
             context_dim = 1280
@@ -421,11 +399,10 @@ class ContactTransformerDecoderHead(nn.Module):
         self.deccontact = nn.Linear(1024, 265) # 265 is number of foot vertices
         self.init_contact = nn.Parameter(torch.randn(1, 265, requires_grad=True))
 
-    def forward(self, x, **kwargs): # x: [b, 1280, 16, 12] (if resnet-50, x: [b, 2048, 8, 8], resnet-34: [b, 512, 8, 8])
+    def forward(self, x, **kwargs):
         batch_size = x.shape[0]
         device = x.device
 
-        # vit pretrained backbone is channel-first. Change to token-first
         x = rearrange(x, 'b c h w -> b (h w) c')
 
         init_contact = self.init_contact.expand(batch_size, -1)
@@ -433,17 +410,13 @@ class ContactTransformerDecoderHead(nn.Module):
 
         token = torch.zeros(batch_size, 1, 1, device=x.device)
 
-        # Pass through transformer
-        token_out = self.transformer(token, context=x) # x: [b, 192, 1280]
-        token_out = token_out[:, 0] # (B, C)
+        token_out = self.transformer(token, context=x)
+        token_out = token_out[:, 0]
 
-        # Readout from token_out
         pred_contact = self.deccontact(token_out) + pred_contact
 
-        # Joint contact
         pred_joint_contact = (torch.tensor(J_regressor_foot, dtype=torch.float32, device=device) @ pred_contact.T).T
         pred_joint_contact_openpose = (torch.tensor(J_regressor_foot_openpose, dtype=torch.float32, device=device) @ pred_contact.T).T
         pred_per_foot_contact = torch.logsumexp(pred_contact, dim=1)
-        # pred_per_foot_contact = pred_contact.max(dim=1).values
 
         return pred_contact, pred_joint_contact, pred_joint_contact_openpose, pred_per_foot_contact

@@ -1,7 +1,8 @@
-import numpy as np
-import torch
-import os.path as osp
+import os
 import pickle
+import numpy as np
+
+import torch
 
 from lib.core.config import cfg
 from lib.utils.transforms import transform_joint_to_other_db
@@ -15,9 +16,6 @@ class SMPLX(object):
         self.vertex_num = 10475
         self.face = self.layer.faces
         self.shape_param_dim = 10
-        with open(osp.join(cfg.MODEL.human_model_path, 'smplx', 'MANO_SMPLX_vertex_ids.pkl'), 'rb') as f:
-            self.hand_vertex_idx = pickle.load(f, encoding='latin1')
-        self.face_vertex_idx = np.load(osp.join(cfg.MODEL.human_model_path, 'smplx', 'SMPL-X__FLAME_vertex_ids.npy'))
 
 
 class SMPL(object):

@@ -17,8 +17,11 @@
 <a href="https://arxiv.org/pdf/2511.22184"><img src='https://img.shields.io/badge/Paper-FECO-blue' alt='Paper PDF'></a>
 <a href="https://arxiv.org/abs/2511.22184"><img src='https://img.shields.io/badge/arXiv-FECO-red' alt='Paper PDF'></a>
 
+<a href="https://huggingface.co/datasets/dqj5182/feco-checkpoints"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Model_Card-Huggingface-orange"></a> 
+<a href="https://huggingface.co/papers/2511.22184"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Paper-Huggingface-orange"></a>
 
-<h2>ArXiv 2025</h2>
+
+<h2>CVPR 2026</h2>
 
 <img src="./asset/teaser.png" alt="Logo" width="60%">
 
@@ -47,13 +50,15 @@ pip install -r requirements.txt
 ## Data
 You need to follow our directory structure of the `data`.
 * For quick demo: See [`docs/data_demo.md`](docs/data_demo.md).
+* For evaluation: See [`docs/data_eval.md`](docs/data_eval.md).
+* For training: See [`docs/data_train.md`](docs/data_train.md).
 
 Then, download the official checkpoints and place them in the `release_checkpoint` from [HuggingFace](https://huggingface.co/datasets/dqj5182/feco-checkpoints/tree/main) by running:
 ```
 bash scripts/download_feco_checkpoints.sh
 ```
 
-## Quick demo
+## Quick demo (Image)
 To run FECO on demo images using the [YOLO](https://docs.ultralytics.com/tasks/pose) human detector, please run:
 ```
 python demo.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
@@ -61,12 +66,45 @@ python demo.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path 
 
 For example,
 ```
-# ViT-H (Default, HaMeR initialized) backbone
+# ViT-H (ImageNet initialized) backbone
 python demo.py --backbone vit-h-14 --checkpoint release_checkpoint/feco_final_vit_h_checkpoint.ckpt --input_path asset/example_images
 
 # ViT-B (ImageNet initialized) backbone
 python demo.py --backbone vit-b-16 --checkpoint release_checkpoint/feco_final_vit_b_checkpoint.ckpt --input_path asset/example_images
 ```
+
+
+## Running FECO
+### Train
+To train FECO, please run:
+```
+python train.py --backbone {BACKBONE_TYPE}
+```
+
+For example,
+```
+# ViT-H (ImageNet initialized) backbone
+python train.py --backbone vit-h-14
+
+# ViT-B (ImageNet initialized) backbone
+python train.py --backbone vit-b-16
+```
+
+### Test
+To evaluate FECO, please run:
+```
+python test.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --test_name {DATASET_NAME}
+```
+
+For example,
+```
+# ViT-H (ImageNet initialized) backbone on MMVP dataset
+python test.py --backbone vit-h-14 --checkpoint release_checkpoint/feco_final_vit_h_checkpoint.ckpt --test_name MMVP
+
+# ViT-H (ImageNet initialized) backbone on COFE dataset
+python test.py --backbone vit-h-14 --checkpoint release_checkpoint/feco_final_vit_h_checkpoint.ckpt --test_name InstaVariety
+```
+
 
 
 ## Technical Q&A
@@ -85,10 +123,10 @@ We thank:
 
 ## Reference
 ```  
-@article{jung2025feco,
+@inproceedings{jung2026feco,
     title={Shoe Style-Invariant and Ground-Aware Learning for Dense Foot Contact Estimation},
     author={Jung, Daniel Sungho and Lee, Kyoung Mu},
-    journal={arXiv preprint arXiv:2511.22184},
-    year={2025}
+    booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+    year={2026}
 }
 ```

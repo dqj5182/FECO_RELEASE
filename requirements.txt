@@ -10,6 +10,8 @@ plyfile
 einops
 timm
 smplx
+gdown
+mediapipe==0.10.5
 pyrender==0.1.33
 huggingface_hub
 pycocotools
@@ -18,6 +20,7 @@ c3d
 lxml
 scikit-learn
 open3d
+pytorch-msssim
 rtree
 h5py
 ultralytics

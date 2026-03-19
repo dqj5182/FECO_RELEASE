@@ -17,25 +17,15 @@ cos_loss = CosineLoss()
 norm_loss = NormLoss()
 
 
-# ---- top-level helpers (no nested defs) ----
 def to_two_class_probs_from_logits(x, eps=1e-7):
-    """
-    x: logits of shape (B, N) or (B, 1, H, W) or (B, H, W) or (B, C, H, W) with C==1
-    returns probs of shape (B, 2, N_flat)
-    """
     p = torch.sigmoid(x)
     if p.dim() > 2:
-        p = p.flatten(1)  # (B, N)
+        p = p.flatten(1)
     p = p.clamp(eps, 1 - eps)
-    return torch.stack([1 - p, p], dim=1)  # (B, 2, N)
+    return torch.stack([1 - p, p], dim=1)
+
 
 def jsd3_from_logits(clean, aug1, aug2, eps=1e-7):
-    """
-    Implements:
-      p_mixture = clamp((p_clean + p_aug1 + p_aug2)/3, eps, 1).log()
-      inv = (KL(p_mixture, p_clean) + KL(p_mixture, p_aug1) + KL(p_mixture, p_aug2))/3
-    using batchmean reduction.
-    """
     p_clean = to_two_class_probs_from_logits(clean, eps)
     p_aug1  = to_two_class_probs_from_logits(aug1,  eps)
     p_aug2  = to_two_class_probs_from_logits(aug2,  eps)
@@ -47,7 +37,7 @@ def jsd3_from_logits(clean, aug1, aug2, eps=1e-7):
         F.kl_div(p_mixture_log, p_aug2,  reduction='batchmean')
     ) / 3.0
     return inv
-# --------------------------------------------
+
 
 def compute_contact_loss(preds, targets):
     total_loss = 0
@@ -64,7 +54,7 @@ def compute_contact_loss(preds, targets):
     valid_height_mask = targets['valid_height_mask']
     ground_normal = targets['ground_data']['ground_normal']
 
-    # Task loss - clean branch
+    # Task loss
     contact_mesh_loss = class_loss(preds['contact_out'], contact_f_mesh, is_3D)
     contact_joint_loss = class_loss(preds['contact_joint_out'], contact_f_joint, is_3D)
     contact_joint_openpose_loss = class_loss(preds['contact_joint_openpose_out'], contact_f_joint_openpose_3d, is_3D)
@@ -102,7 +92,7 @@ def compute_contact_loss(preds, targets):
     contact_style_joint_openpose_2d_loss2 = class_loss(preds['contact_joint_openpose_style_out2'], contact_f_joint_openpose_2d, is_2D)
     style_contact_loss2 = cfg.TRAIN.contact_loss_weight * (contact_style_mesh_loss2 + contact_style_joint_loss2 + contact_style_joint_openpose_loss2 + contact_style_joint_openpose_2d_loss2)
 
-    # Adversarial loss (same entropy loss but gradients update early layers)
+    # Adversarial loss
     contact_adv_mesh_loss = adv_loss(preds['contact_adv_out'], is_3D)
     contact_adv_joint_loss = adv_loss(preds['contact_joint_adv_out'], is_3D)
     contact_adv_joint_openpose_loss = adv_loss(preds['contact_joint_openpose_adv_out'], is_3D)
@@ -121,7 +111,7 @@ def compute_contact_loss(preds, targets):
     contact_adv_joint_openpose_2d_loss2 = adv_loss(preds['contact_joint_openpose_adv_out2'], is_2D)
     adv_contact_loss2 = cfg.TRAIN.contact_loss_weight * (contact_adv_mesh_loss2 + contact_adv_joint_loss2 + contact_adv_joint_openpose_loss2 + contact_adv_joint_openpose_2d_loss2)
 
-    # Ground - clean branch
+    # Ground loss
     foot_mask_loss = 0.5 * class_loss(preds['mask_foot_out'], valid_height_mask, is_3D) + 0.5 * dice_loss(preds['mask_foot_out'], valid_height_mask, is_3D)
     pixel_height_loss = norm_loss(preds['pixel_height_out'], pixel_height_map, is_3D)
     ground_normal_loss = cos_loss(preds['ground_normal_out'], ground_normal, is_3D)
@@ -137,7 +127,7 @@ def compute_contact_loss(preds, targets):
     ground_normal_loss2 = cos_loss(preds['ground_normal_out2'], ground_normal, is_3D)
     ground_loss2 = foot_mask_loss2 + pixel_height_loss2 + ground_normal_loss2
 
-    # Style-branch ground-aware losses (symmetry with main path)
+    # Style-branch ground-aware losses
     pixel_height_style_loss = norm_loss(preds['pixel_height_style_out'], pixel_height_map, is_3D)
     ground_normal_style_loss = cos_loss( preds['ground_normal_style_out'], ground_normal, is_3D)
     style_ground_loss = pixel_height_style_loss + ground_normal_style_loss
@@ -150,10 +140,10 @@ def compute_contact_loss(preds, targets):
     ground_normal_style_loss2 = cos_loss( preds['ground_normal_style_out2'], ground_normal, is_3D)
     style_ground_loss2 = pixel_height_style_loss2 + ground_normal_style_loss2
 
+    # Total loss
     total_foot_mask_loss = (foot_mask_loss + foot_mask_loss1 + foot_mask_loss2) / 3
     total_pixel_height_loss = (pixel_height_loss + pixel_height_loss1 + pixel_height_loss2) / 3
     total_ground_normal_loss = (ground_normal_loss + ground_normal_loss1 + ground_normal_loss2) / 3
-
 
     total_main_loss = cfg.TRAIN.contact_loss_weight * (main_contact_loss + main_contact_loss1 + main_contact_loss2)/3
     total_style_loss = cfg.TRAIN.style_contact_loss_weight * (style_contact_loss + style_contact_loss1 + style_contact_loss2)/3
