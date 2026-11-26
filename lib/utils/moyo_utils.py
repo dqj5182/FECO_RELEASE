@@ -16,6 +16,7 @@ import torch.nn.functional as F
 PRESSURE_MAP_FPS = 60
 CONTACT_THRESH = 0.15
 MOYO_DATA_DIR = 'data/MOYO/data'
+MOYO_DATA_PATH = MOYO_DATA_DIR
 ESSENTIALS_DIR = os.path.join(MOYO_DATA_PATH, 'essentials')
 SMPLX_DIR = os.path.join(ESSENTIALS_DIR, 'yogi_segments', 'smplx')
 SMPLX_PART_BOUNDS = os.path.join(SMPLX_DIR, 'part_meshes_ply/smplx_segments_bounds.pkl')

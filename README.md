@@ -30,7 +30,6 @@
 _**FECO** is a framework for **dense foot contact estimation** that addresses the challenges posed by **diverse shoe appearances** and **limited ground appearance variability** in foot images. Leveraging 10 datasets, including **our proposed in-the-wild dataset COFE**, we build a powerful model that learns dense foot contact across diverse scenarios._
 
 
-## Code
 
 ## Installation
 * We recommend you to use an [Anaconda](https://www.anaconda.com/) virtual environment. Install PyTorch >=1.13.1 and Python >= 3.8.0. Our latest FECO model is tested on Python 3.8.20, PyTorch 1.1e.1, CUDA 11.6.

@@ -56,3 +56,11 @@ done
 # Download code to read dataset
 wget https://intercap.is.tue.mpg.de/media/upload/Code_to_Read_Data.zip \
     -O "$save_dir/Code_to_Read_Data.zip"
+
+# Download camera calibration
+calibration_dir="data/InterCap/calibration"
+mkdir -p "$calibration_dir"
+for file in Color.json Color_{2..6}.json; do
+    wget "https://raw.githubusercontent.com/YinghaoHuang91/InterCap/master/Data/calibration_third/$file" \
+        -O "$calibration_dir/$file"
+done
